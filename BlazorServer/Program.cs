@@ -32,7 +32,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.MapBlazorHub();
-app.MapHub<ChatHub>("/chatHub");
+app.MapHub<ChatHub>("/chatHub"); // initialize the server
 app.MapFallbackToPage("/_Host");
 
 app.Run();

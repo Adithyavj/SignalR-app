@@ -1,9 +1,72 @@
 ﻿@page "/"
 
-<PageTitle>Index</PageTitle>
+@using Microsoft.AspNetCore.SignalR.Client;
+@inject NavigationManager navManager;
+@implements IAsyncDisposable;
 
-<h1>Hello, world!</h1>
+<div class="form-group">
+    <label>
+        User: <input @bind="userInput" />
+    </label>
+</div>
+<div class="form-group">
+    <label>
+        Message: <input @bind="messageInput" />
+    </label>
+</div>
+<button @onclick="Send" disabled="@(IsConnected == false)">Send</button>
 
-Welcome to your new app.
+<hr />
+<ul>
+    @foreach (string message in messages)
+    {
+        <li>@message</li>
+    }
+</ul>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@code {
+    private HubConnection? hubConnection;
+    private List<string> messages = new();
+    private string? userInput;
+    private string? messageInput;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // build the connection to the chatHub
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(navManager.ToAbsoluteUri("/chatHub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        // Client Side (Reciever of the message)
+        // add event to hubConnection to capture the user, message and format it 
+        hubConnection.On<string, string>("RecieveMessage", (user, message) =>
+        {
+            var formattedMessage = $"{user}: {message}";
+            messages.Add(formattedMessage);
+            InvokeAsync(StateHasChanged); // let blazor know something has changed and to check for new values
+        });
+
+        // start the hubConnection
+        await hubConnection.StartAsync();
+    }
+
+    private async Task Send()
+    {
+        if (hubConnection is not null)
+        {
+            // client sending the message to the server
+            await hubConnection.SendAsync("SendMessage", userInput, messageInput);
+        }
+    }
+
+    public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }   
+    }
+}
