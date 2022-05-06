@@ -108,6 +108,7 @@ public partial class MainWindow : Window
         try
         {
             await counterConnection.StartAsync();
+            openCounter.IsEnabled = false;
         }
         catch (Exception ex)
         {
