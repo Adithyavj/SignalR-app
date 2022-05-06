@@ -33,6 +33,7 @@ app.UseRouting();
 
 app.MapBlazorHub();
 app.MapHub<ChatHub>("/chatHub"); // initialize the server
+app.MapHub<CounterHub>("/counterHub"); // initialize the counterHub
 app.MapFallbackToPage("/_Host");
 
 app.Run();
